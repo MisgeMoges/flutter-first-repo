@@ -1,24 +1,35 @@
-// ignore_for_file: prefer_const_constructors, prefer_final_fields
+// ignore_for_file: prefer_const_constructors, prefer_final_fields, unused_import, unused_local_variable, unused_element
+import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:simpleproject/my_drawer.dart';
-import 'package:simpleproject/card_widget.dart';
-
-
+import 'package:http/http.dart' as http;
 
 class Homepage extends StatefulWidget {
   const Homepage({Key? key}) : super(key: key);
-
+  static const String routeName = "/home";
   @override
   State<Homepage> createState() => _HomepageState();
 }
 
 class _HomepageState extends State<Homepage> {
-  var myText = "Change my name";
-  TextEditingController _nameController = TextEditingController();
+  var url = 'https://jsonplaceholder.typicode.com/photos';
+  var data;
+
   @override
   void initState() {
     super.initState();
+    fetchData();
+  }
+
+  fetchData() async {
+    var res = await http.get(Uri.parse(url));
+    if (res.statusCode == 200) {
+      data = jsonDecode(res.body);
+      setState(() {});
+    } else {
+      throw Exception('Failed to load album');
+    }
   }
 
   @override
@@ -32,21 +43,33 @@ class _HomepageState extends State<Homepage> {
       backgroundColor: Colors.grey[200],
       appBar: AppBar(
         title: const Text("Awesome App"),
+         actions: <Widget>[
+          IconButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              icon: Icon(Icons.exit_to_app)),
+        ],
       ),
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(25),
-          child: SizedBox(
-            child:
-                Namecard_widgt(myText: myText, nameController: _nameController),
-          ),
-        ),
-      ),
+      body: data != null
+          ? GridView.builder(
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 3),
+              itemBuilder: (context, index) {
+                return ListTile(
+                    title: Text(data[index]['title']),
+                    subtitle: Text("ID: ${data[index]["id"]}"),
+                    leading: Image.asset("/computer.jpeg"));
+              },
+              itemCount: data.length,
+            )
+          : Center(
+              child: CircularProgressIndicator(),
+            ),
       drawer: Mydrawer(),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          myText = _nameController.text;
-          setState(() {});
+          // myText = _nameController.text;
+          // setState(() {});
         },
         child: Icon(Icons.send),
       ),
